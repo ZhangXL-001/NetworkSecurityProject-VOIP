@@ -13,6 +13,7 @@ from pydub.playback import play
 from pydub.utils import which
 from rc4 import encrypt
 import socket
+import threading
 
 window = tk.Tk()
 window.title("简易VOIP安全网络通话(1)")
@@ -23,6 +24,7 @@ greeting.pack()
 ipentry = tk.Entry(fg="#00FF42", bg="black", width=46)
 ipentry.pack()
 #ip= ipentry.get()
+
 
 def check_online():
     clientsocket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
@@ -40,9 +42,16 @@ checkbutton.pack()
 getsecond= tk.Label(text='请输入单次通话多少秒',foreground="yellow",background="green",width=46)
 getsecond.pack()
 
+second=3
 secondentry = tk.Entry(fg="black", bg="white", width=46)
 secondentry.pack()
-second= secondentry.get()
+def getsecond():
+    global second
+    second=int(secondentry.get())
+
+secondbutton=tk.Button(text='确定',command=getsecond)
+secondbutton.pack()
+
 
 def make_a_call():
     AudioSegment.converter = which("ffmpeg")
@@ -120,45 +129,50 @@ phonebutton.pack()
 serversocket=socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 serversocket.bind(('127.0.0.1',4097))
 serversocket.listen(1)
-while True:
-    sock,addr =serversocket.accept()
-    pick_up_or_not=tk.messagebox.askyesno('收到IP：'+addr+'的一条语音','您现在要收听吗？')
-    if pick_up_or_not == True:
-        #接电话
-        with open('encryptedfrom1.amr',wb) as w:
-            while True:
-                filedata = serversocket.recv(1024)
-                if filedata:
-                    w.write(filedata)
-                else :
-                    break
-        with open('encryptedfrom1.amr','rb') as f:
-            amr=f.read()
-        with open('decryptfrom2.amr','wb') as e:
-            e.write(decrypt(amr,'123456789'))
-        sound = AudioSegment.from_file('decryptfrom2.amr', format='amr')
-        #play(sound)
-        sound.export('decryptfrom2.wav', format='wav')
-        play(sound)
-        #pass  
-    else:    
-        #存下来
-        with open('encryptedfrom1.amr',wb) as w:
-            while True:
-                filedata = serversocket.recv(1024)
-                if filedata:
-                    w.write(filedata)
-                else :
-                    break
-        with open('encryptedfrom1.amr','rb') as f:
-            amr=f.read()
-        with open('decryptfrom2.amr','wb') as e:
-            e.write(decrypt(amr,'123456789'))
-        sound = AudioSegment.from_file('decryptfrom2.amr', format='amr')
-        #play(sound)
-        sound.export('decryptfrom2.wav', format='wav')
-        #pass
 
+def server():
+    while True:
+        sock,addr =serversocket.accept()
+        pick_up_or_not=tk.messagebox.askyesno('收到IP：'+addr+'的一条语音','您现在要收听吗？')
+        if pick_up_or_not == True:
+        #接电话
+            with open('encryptedfrom1.amr',wb) as w:
+                while True:
+                    filedata = serversocket.recv(1024)
+                    if filedata:
+                        w.write(filedata)
+                    else :
+                        break
+            with open('encryptedfrom1.amr','rb') as f:
+                amr=f.read()
+            with open('decryptfrom2.amr','wb') as e:
+                e.write(decrypt(amr,'123456789'))
+            sound = AudioSegment.from_file('decryptfrom2.amr', format='amr')
+        #play(sound)
+            sound.export('decryptfrom2.wav', format='wav')
+            play(sound)
+
+        #pass  
+        else:    
+        #存下来
+            with open('encryptedfrom1.amr',wb) as w:
+                while True:
+                    filedata = serversocket.recv(1024)
+                    if filedata:
+                        w.write(filedata)
+                    else :
+                        break
+            with open('encryptedfrom1.amr','rb') as f:
+                amr=f.read()
+            with open('decryptfrom2.amr','wb') as e:
+                e.write(decrypt(amr,'123456789'))
+            sound = AudioSegment.from_file('decryptfrom2.amr', format='amr')
+        #play(sound)
+            sound.export('decryptfrom2.wav', format='wav')
+        #pass
+        # 
+thread1=threading.Thread(target=server,name='serverthread')
+thread1.start()
 
 
 
@@ -176,45 +190,45 @@ playbutton.pack()
 window.mainloop()
 
 
-/*'''serversocket=socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-serversocket.bind(('127.0.0.1',4097))
-serversocket.listen(1)
-while True:
-    sock,addr =serversocket.accept()
-    pick_up_or_not=tk.messagebox.askyesno('收到IP：'+addr+'的一条语音','您现在要收听吗？')
-    if pick_up_or_not == True:
-        #接电话
-        with open('encryptedfrom1.amr',wb) as w:
-            while True:
-                filedata = serversocket.recv(1024)
-                if filedata:
-                    w.write(filedata)
-                else :
-                    break
-        with open('encryptedfrom1.amr','rb') as f:
-            amr=f.read()
-        with open('decryptfrom2.amr','wb') as e:
-            e.write(decrypt(amr,'123456789'))
-        sound = AudioSegment.from_file('decryptfrom2.amr', format='amr')
-        #play(sound)
-        sound.export('decryptfrom2.wav', format='wav')
-        play(sound)
-        #pass  
-    else:    
-        #存下来
-        with open('encryptedfrom1.amr',wb) as w:
-            while True:
-                filedata = serversocket.recv(1024)
-                if filedata:
-                    w.write(filedata)
-                else :
-                    break
-        with open('encryptedfrom1.amr','rb') as f:
-            amr=f.read()
-        with open('decryptfrom2.amr','wb') as e:
-            e.write(decrypt(amr,'123456789'))
-        sound = AudioSegment.from_file('decryptfrom2.amr', format='amr')
-        #play(sound)
-        sound.export('decryptfrom2.wav', format='wav')
-        #pass 
-     '''   
+# /*'''serversocket=socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+# serversocket.bind(('127.0.0.1',4097))
+# serversocket.listen(1)
+# while True:
+#     sock,addr =serversocket.accept()
+#     pick_up_or_not=tk.messagebox.askyesno('收到IP：'+addr+'的一条语音','您现在要收听吗？')
+#     if pick_up_or_not == True:
+#         #接电话
+#         with open('encryptedfrom1.amr',wb) as w:
+#             while True:
+#                 filedata = serversocket.recv(1024)
+#                 if filedata:
+#                     w.write(filedata)
+#                 else :
+#                     break
+#         with open('encryptedfrom1.amr','rb') as f:
+#             amr=f.read()
+#         with open('decryptfrom2.amr','wb') as e:
+#             e.write(decrypt(amr,'123456789'))
+#         sound = AudioSegment.from_file('decryptfrom2.amr', format='amr')
+#         #play(sound)
+#         sound.export('decryptfrom2.wav', format='wav')
+#         play(sound)
+#         #pass  
+#     else:    
+#         #存下来
+#         with open('encryptedfrom1.amr',wb) as w:
+#             while True:
+#                 filedata = serversocket.recv(1024)
+#                 if filedata:
+#                     w.write(filedata)
+#                 else :
+#                     break
+#         with open('encryptedfrom1.amr','rb') as f:
+#             amr=f.read()
+#         with open('decryptfrom2.amr','wb') as e:
+#             e.write(decrypt(amr,'123456789'))
+#         sound = AudioSegment.from_file('decryptfrom2.amr', format='amr')
+#         #play(sound)
+#         sound.export('decryptfrom2.wav', format='wav')
+#         #pass 
+#      '''   
